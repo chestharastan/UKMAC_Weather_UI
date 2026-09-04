@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+  --surface: #ffffff;
+  --muted: #6d766f;
+  --line: rgba(60, 60, 67, 0.14);
+  --line-strong: rgba(60, 60, 67, 0.24);
+  --accent: #0f766e;
+  --accent-strong: #0b5f59;
+  --accent-soft: #d9f3ee;
+  --warning: #b45309;
+
+  --glass-blur: blur(20px) saturate(180%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Helvetica Neue", Arial, sans-serif;
+
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  --shadow-xs: 0 0.5px 0 rgba(16, 24, 21, 0.03);
+  --shadow-sm: 0 0.5px 0 rgba(16, 24, 21, 0.04), 0 1px 3px rgba(16, 24, 21, 0.05);
+  --shadow-md: 0 0.5px 0 rgba(16, 24, 21, 0.04), 0 6px 16px -6px rgba(16, 24, 21, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.022em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: -0.01em;
+}
+
+/*
+ * iOS Safari auto-zooms the page on focus when a form field's computed
+ * font-size is under 16px. Unlayered so it wins over Tailwind's `text-sm`.
+ */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+
+/*
+ * Frosted glass material — reskins every `bg-white` surface (cards, panels,
+ * modals, table shells) into a translucent widget material. Unlayered so it
+ * wins over Tailwind's own `@layer utilities` declaration.
+ */
+.bg-white {
+  background-color: rgba(255, 255, 255, 0.78);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.border.border-\[var\(--line\)\] {
+  border-width: 0.5px;
+}
+
+.border-t.border-\[var\(--line\)\] {
+  border-top-width: 0.5px;
+}
+
+.border-b.border-\[var\(--line\)\] {
+  border-bottom-width: 0.5px;
+}
