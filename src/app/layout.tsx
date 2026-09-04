@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Weather Monitor System",
-  description: "Saved-location weather monitor with shareable filters.",
+  title: "Weather Dashboard",
+  description: "Monitor current and forecast conditions for farm and water management.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
