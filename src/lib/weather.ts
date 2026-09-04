@@ -1,3 +1,5 @@
+import type { SyncResult, WeatherDashboard, WeatherHourlyForecast } from "@/modules/weather/weather.types";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 export type WeatherLocation = {
@@ -103,4 +105,25 @@ export function getWeather(params: { days: number; location?: string }) {
     query.set("location", params.location);
   }
   return requestJson<WeatherResponse>(`/api/weather?${query.toString()}`);
+}
+
+export function getWeatherDashboard(params: { locationId: string; startDate: string; endDate: string }) {
+  const query = new URLSearchParams({
+    location_id: params.locationId,
+    start_date: params.startDate,
+    end_date: params.endDate,
+  });
+  return requestJson<WeatherDashboard>(`/api/weather/dashboard?${query.toString()}`);
+}
+
+export function getWeatherHourly(params: { locationId: string; hours: number }) {
+  const query = new URLSearchParams({
+    location_id: params.locationId,
+    hours: String(params.hours),
+  });
+  return requestJson<WeatherHourlyForecast>(`/api/weather/hourly?${query.toString()}`);
+}
+
+export function syncWeatherLocation(locationId: string) {
+  return requestJson<SyncResult>(`/api/weather/sync/${locationId}`, { method: "POST" });
 }
