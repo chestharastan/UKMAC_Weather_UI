@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 
 type CalendarDatePickerProps = {
+  clearable?: boolean;
   disabled?: boolean;
   error?: string;
   helperText?: string;
@@ -77,6 +78,7 @@ function buildMonthGrid(viewMonth: Date): MonthCell[] {
 const POPOVER_WIDTH = 288;
 
 export function CalendarDatePicker({
+  clearable = true,
   disabled,
   error,
   helperText,
@@ -184,7 +186,7 @@ export function CalendarDatePicker({
           aria-expanded={isOpen}
           className={cn(
             "flex h-11 w-full items-center justify-between rounded-md border border-[var(--line)] bg-[#fbfbfc] px-3 text-sm text-[var(--foreground)] outline-none transition-all duration-150 focus:border-[var(--accent)] focus:bg-white focus:ring-4 focus:ring-[var(--accent-soft)]",
-            value && !disabled && "pr-9",
+            value && clearable && !disabled && "pr-9",
             error && "border-[#d70015] focus:border-[#d70015] focus:ring-[#ffd7d9]",
             disabled && "cursor-not-allowed opacity-60",
           )}
@@ -198,7 +200,7 @@ export function CalendarDatePicker({
           <CalendarDays className="h-4 w-4 text-[#74747d]" />
         </button>
 
-        {value && !disabled ? (
+        {value && clearable && !disabled ? (
           <button
             aria-label="Clear date"
             className="absolute right-8 top-1/2 -translate-y-1/2 rounded p-0.5 text-[#9aa6a1] transition hover:text-[var(--foreground)]"

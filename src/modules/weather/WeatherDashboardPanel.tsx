@@ -2,6 +2,7 @@
 
 import {
   CalendarRange,
+  CloudSun,
   ChevronDown,
   Compass,
   Droplets,
@@ -10,9 +11,10 @@ import {
   Info,
   Layers,
   Leaf,
+  MapPin,
   RefreshCw,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
@@ -94,17 +96,76 @@ function formatUpdatedAt(value: string | null) {
 }
 
 const SKELETON_BAR_HEIGHTS = [38, 52, 44, 60, 48, 66, 42, 58, 50, 70, 46, 62, 40, 56, 48, 64, 44, 58, 50, 46];
+const SKELETON_LINE_POINTS = [66, 58, 62, 48, 54, 42, 46, 34, 40, 30, 38, 26, 32, 24];
+
+function SkeletonTextBlock({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: rows }, (_, index) => (
+        <span
+          className="block h-3 animate-pulse rounded bg-[#e7ece8]"
+          key={index}
+          style={{ animationDelay: `${index * 70}ms`, width: `${index === rows - 1 ? 56 : 88 - index * 14}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function SkeletonMetricGrid() {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 4 }, (_, index) => (
+        <div className="rounded-md border border-[var(--line)] bg-[#fbfcfb] p-3" key={index}>
+          <span className="block h-3 w-20 animate-pulse rounded bg-[#e7ece8]" />
+          <span className="mt-3 block h-6 w-24 animate-pulse rounded bg-[#dfe7e2]" style={{ animationDelay: `${index * 80}ms` }} />
+          <span className="mt-2 block h-2.5 w-16 animate-pulse rounded bg-[#edf1ee]" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function SkeletonChartBars({ height = 220 }: { height?: number }) {
   return (
-    <div className="flex items-end gap-1 overflow-hidden rounded-md bg-[#f7f9f7] p-3" style={{ height }}>
-      {SKELETON_BAR_HEIGHTS.map((barHeight, index) => (
-        <span
-          className="flex-1 animate-pulse rounded-t-sm bg-[#e2e8e4]"
-          key={index}
-          style={{ animationDelay: `${index * 45}ms`, height: `${barHeight}%` }}
-        />
-      ))}
+    <div className="relative overflow-hidden rounded-md bg-[#f7f9f7] p-3" style={{ height }}>
+      <div className="absolute inset-x-3 top-6 space-y-9">
+        {Array.from({ length: 5 }, (_, index) => (
+          <span className="block border-t border-dashed border-[#dce4df]" key={index} />
+        ))}
+      </div>
+      <div className="relative flex h-full items-end gap-1">
+        {SKELETON_BAR_HEIGHTS.map((barHeight, index) => (
+          <span
+            className="flex-1 animate-pulse rounded-t-sm bg-[#e2e8e4]"
+            key={index}
+            style={{ animationDelay: `${index * 45}ms`, height: `${barHeight}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SkeletonLineChart({ height = 220 }: { height?: number }) {
+  return (
+    <div className="relative overflow-hidden rounded-md bg-[#f7f9f7] p-3" style={{ height }}>
+      <div className="absolute inset-x-3 top-6 space-y-9">
+        {Array.from({ length: 5 }, (_, index) => (
+          <span className="block border-t border-dashed border-[#dce4df]" key={index} />
+        ))}
+      </div>
+      <div className="relative flex h-full items-end gap-1.5">
+        {SKELETON_LINE_POINTS.map((pointHeight, index) => (
+          <div className="flex flex-1 flex-col items-center gap-1" key={index}>
+            <span
+              className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#b7c9c0]"
+              style={{ animationDelay: `${index * 55}ms`, marginBottom: `${pointHeight}%` }}
+            />
+            <span className="h-2 w-full rounded-sm bg-[#e7ece8]" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -112,37 +173,73 @@ function SkeletonChartBars({ height = 220 }: { height?: number }) {
 function ChartPanelSkeleton({
   description,
   height = 220,
+  variant = "line",
   title,
 }: {
   description?: string;
   height?: number;
+  variant?: "bar" | "line";
   title: string;
 }) {
   return (
     <section className="rounded-md border border-[var(--line)] bg-white p-4 shadow-sm sm:p-5">
-      <div className="mb-4">
-        <h2 className="text-base font-semibold text-[var(--foreground)]">{title}</h2>
-        {description ? <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{description}</p> : null}
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-[var(--foreground)]">{title}</h2>
+          {description ? <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{description}</p> : null}
+        </div>
+        <div className="flex gap-2">
+          <span className="h-7 w-16 animate-pulse rounded-md bg-[#f1f4f2]" />
+          <span className="h-7 w-16 animate-pulse rounded-md bg-[#f1f4f2]" />
+        </div>
       </div>
       <div className="mb-3 flex gap-4">
         <span className="h-3 w-24 animate-pulse rounded bg-[#e7ece8]" />
         <span className="h-3 w-20 animate-pulse rounded bg-[#e7ece8]" />
+        <span className="h-3 w-16 animate-pulse rounded bg-[#e7ece8]" />
       </div>
-      <SkeletonChartBars height={height} />
+      {variant === "bar" ? <SkeletonChartBars height={height} /> : <SkeletonLineChart height={height} />}
     </section>
   );
 }
 
-function DashboardSkeleton() {
+export function DashboardSkeleton({ showControls = true }: { showControls?: boolean }) {
   return (
-    <div className="space-y-5">
+    <div aria-busy="true" aria-label="Loading weather dashboard" className="space-y-5" role="status">
+      {showControls ? <section className="rounded-md border border-[var(--line)] bg-white p-4 shadow-sm sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <span className="block h-3 w-36 animate-pulse rounded bg-[#dfe7e2]" />
+            <span className="mt-3 block h-7 w-52 max-w-full animate-pulse rounded bg-[#e7ece8]" />
+            <div className="mt-4 max-w-xl">
+              <SkeletonTextBlock rows={3} />
+            </div>
+          </div>
+          <span className="h-9 w-28 animate-pulse rounded-md bg-[#eef3f0]" />
+        </div>
+
+        <div className="mt-5 grid gap-4 rounded-md border border-[var(--line)] bg-white p-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
+          <div>
+            <span className="block h-3 w-20 animate-pulse rounded bg-[#e7ece8]" />
+            <span className="mt-2 block h-10 animate-pulse rounded-md bg-[#f1f4f2]" />
+          </div>
+          <div>
+            <span className="block h-3 w-20 animate-pulse rounded bg-[#e7ece8]" />
+            <span className="mt-2 block h-10 animate-pulse rounded-md bg-[#f1f4f2]" />
+          </div>
+          <span className="self-end h-10 w-28 animate-pulse rounded-md bg-[#e2e8e4]" />
+        </div>
+      </section> : null}
+
+      <SkeletonMetricGrid />
       <ChartPanelSkeleton height={260} title="Temperature Trend" />
-      <ChartPanelSkeleton height={240} title="Daily Rainfall Trend" />
+      <ChartPanelSkeleton height={240} title="Daily Rainfall Trend" variant="bar" />
       <ChartPanelSkeleton height={220} title="Wind Conditions" />
       <ChartPanelSkeleton height={220} title="Humidity Trend" />
 
       <div className="flex items-center justify-between rounded-md border border-[var(--line)] bg-white p-4 text-sm font-semibold shadow-sm sm:p-5">
-        More weather data <ChevronDown className="h-4 w-4 text-[var(--muted)]" />
+        <span className="h-4 w-36 animate-pulse rounded bg-[#e7ece8]" />
+        <ChevronDown className="h-4 w-4 text-[var(--muted)]" />
       </div>
     </div>
   );
@@ -157,14 +254,34 @@ export function WeatherDashboardPanel({
   const initialToday = localIsoDate();
   const [startDate, setStartDate] = useState(() => initialStartDate || addDays(initialToday, -13));
   const [endDate, setEndDate] = useState(() => initialEndDate || addDays(initialToday, 14));
+  const [mode, setMode] = useState<"forecast" | "custom">(() =>
+    startDate === initialToday && endDate === addDays(initialToday, NEAR_FORECAST_DAYS - 1) ? "forecast" : "custom",
+  );
+  // Remembers the last custom end date you picked, kept in sync on every edit
+  // (not just when leaving custom mode), so switching to "Next 16 days" and
+  // back restores exactly what you chose instead of an outdated snapshot.
+  // The start date is never touched by the mode toggle — it only ever
+  // changes when you edit it directly.
+  const [customEndDate, setCustomEndDate] = useState(() => endDate);
+
+  useEffect(() => {
+    setStartDate(initialStartDate || addDays(localIsoDate(), -13));
+    setEndDate(initialEndDate || addDays(localIsoDate(), 14));
+  }, [initialStartDate, initialEndDate]);
 
   function updateStartDate(nextStartDate: string) {
+    if (!nextStartDate) return;
     setStartDate(nextStartDate);
-    onDateRangeChange(nextStartDate, endDate);
+    const nextEndDate = mode === "forecast" ? addDays(nextStartDate, NEAR_FORECAST_DAYS - 1) : endDate;
+    if (mode === "forecast") setEndDate(nextEndDate);
+    onDateRangeChange(nextStartDate, nextEndDate);
   }
 
   function updateEndDate(nextEndDate: string) {
+    if (!nextEndDate) return;
     setEndDate(nextEndDate);
+    setMode("custom");
+    setCustomEndDate(nextEndDate);
     onDateRangeChange(startDate, nextEndDate);
   }
   const [dashboard, setDashboard] = useState<WeatherDashboardData | null>(null);
@@ -179,11 +296,21 @@ export function WeatherDashboardPanel({
   const [seasonalLoading, setSeasonalLoading] = useState(false);
   const [seasonalError, setSeasonalError] = useState("");
   const [seasonalFetchedAt, setSeasonalFetchedAt] = useState<Date | null>(null);
+  const dashboardRequestId = useRef(0);
 
-  const today = dashboard?.today ?? initialToday;
-  const nearForecastEndDate = useMemo(() => addDays(today, NEAR_FORECAST_DAYS), [today]);
+  const today = initialToday;
+  const nearForecastEndDate = useMemo(() => addDays(today, NEAR_FORECAST_DAYS - 1), [today]);
+  const isNearForecast = mode === "forecast";
   const needsSeasonal = endDate > nearForecastEndDate;
   const maxEndDate = useMemo(() => addDays(today, OUTLOOK_MAX_DAYS), [today]);
+
+  function selectRange(nextMode: "forecast" | "custom") {
+    if (nextMode === mode) return;
+    setMode(nextMode);
+    const nextEndDate = nextMode === "forecast" ? addDays(startDate, NEAR_FORECAST_DAYS - 1) : customEndDate;
+    setEndDate(nextEndDate);
+    onDateRangeChange(startDate, nextEndDate);
+  }
 
   const hourlyCacheKey = `weather-hourly:${location.id}`;
 
@@ -231,6 +358,7 @@ export function WeatherDashboardPanel({
   const loadDashboard = useCallback(
     async (options?: { silent?: boolean }) => {
       if (!startDate || !fetchEndDate) return;
+      const requestId = ++dashboardRequestId.current;
 
       if (!options?.silent) {
         setIsLoading(true);
@@ -242,14 +370,14 @@ export function WeatherDashboardPanel({
           locationId: location.id,
           startDate,
         });
-        setDashboard(response);
         setCachedValue(dashboardCacheKey, response);
+        if (requestId === dashboardRequestId.current) setDashboard(response);
       } catch (requestError) {
-        if (!options?.silent) {
+        if (requestId === dashboardRequestId.current && !options?.silent) {
           setError(requestError instanceof Error ? requestError.message : "Could not load cached weather data.");
         }
       } finally {
-        if (!options?.silent) setIsLoading(false);
+        if (requestId === dashboardRequestId.current && !options?.silent) setIsLoading(false);
       }
     },
     [dashboardCacheKey, fetchEndDate, location.id, startDate],
@@ -259,12 +387,17 @@ export function WeatherDashboardPanel({
     const cached = getCachedValue<WeatherDashboardData>(dashboardCacheKey);
     if (cached) {
       setDashboard(cached.value);
+      setIsLoading(false);
+      setError("");
       if (Date.now() - new Date(cached.cachedAt).getTime() >= DASHBOARD_CACHE_MAX_AGE_MS) {
-        queueMicrotask(() => void loadDashboard({ silent: true }));
+        void loadDashboard({ silent: true });
       }
     } else {
-      queueMicrotask(() => void loadDashboard());
+      void loadDashboard();
     }
+    return () => {
+      dashboardRequestId.current += 1;
+    };
   }, [dashboardCacheKey, loadDashboard]);
 
   const loadSeasonal = useCallback(async () => {
@@ -317,13 +450,13 @@ export function WeatherDashboardPanel({
   }, [loadDashboard, loadHourlyForecast, loadSeasonal, needsSeasonal]);
 
   const records = useMemo(() => {
-    const base = dashboard?.records ?? [];
+    const base = (dashboard?.records ?? []).filter((record) => record.date >= startDate && record.date <= endDate);
     if (!needsSeasonal) return base;
 
     const lastNearDate = base.at(-1)?.date ?? today;
-    const futureSeasonal = seasonalRecords.filter((record) => record.date > lastNearDate && record.date <= endDate);
+    const futureSeasonal = seasonalRecords.filter((record) => record.date > lastNearDate && record.date >= startDate && record.date <= endDate);
     return [...base, ...futureSeasonal].sort((a, b) => a.date.localeCompare(b.date));
-  }, [dashboard?.records, endDate, needsSeasonal, seasonalRecords, today]);
+  }, [dashboard?.records, endDate, needsSeasonal, seasonalRecords, startDate, today]);
   const visibleHourlyPoints = useMemo(() => hourlyPoints.slice(0, hourlyRange), [hourlyPoints, hourlyRange]);
   const current = useMemo(() => {
     if (!dashboard) return null;
@@ -344,49 +477,75 @@ export function WeatherDashboardPanel({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-md border border-[var(--line)] bg-white p-4 shadow-sm sm:p-5">
+      <section aria-label="Weather range" className="border-y border-[var(--line)] py-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-strong)]">
+            <h2 className="text-xl font-semibold text-[var(--foreground)]">{location.name}</h2>
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-[var(--muted)]">
+              <MapPin aria-hidden className="h-3.5 w-3.5" />
               {formatNumber(location.latitude, 4)}, {formatNumber(location.longitude, 4)}
             </p>
-            <h2 className="text-xl font-semibold tracking-[-0.02em] text-[var(--foreground)]">{location.name}</h2>
+          </div>
+          <div aria-label="Date range mode" className="grid w-full grid-cols-2 gap-1 rounded-md bg-[#f1f4f2] p-1 sm:w-auto" role="group">
+            {[
+              { mode: "forecast" as const, label: "Next 16 days", icon: CloudSun, active: isNearForecast },
+              { mode: "custom" as const, label: "Custom range", icon: CalendarRange, active: !isNearForecast },
+            ].map(({ mode, label, icon: Icon, active }) => (
+              <button
+                aria-pressed={active}
+                className={cn("inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-[var(--accent)]", active ? "bg-white text-[var(--accent-strong)] shadow-sm" : "text-[var(--muted)] hover:text-[var(--foreground)]")}
+                key={mode}
+                onClick={() => selectRange(mode)}
+                type="button"
+              >
+                <Icon aria-hidden className="h-4 w-4 shrink-0" />{label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="mt-3 grid gap-3 rounded-md border border-[var(--line)] bg-white p-3">
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
-            <CalendarDatePicker
-              label="Start date"
-              max={endDate}
-              min={HISTORICAL_FLOOR_DATE}
-              onChange={updateStartDate}
-              value={startDate}
-            />
-            <CalendarDatePicker
-              label="End date"
-              max={maxEndDate}
-              min={startDate}
-              onChange={updateEndDate}
-              value={endDate}
-            />
-            <Button className="gap-2" disabled={isLoading || isSyncing} onClick={() => void handleRefresh()} variant="secondary">
-              <RefreshCw className={cn("h-4 w-4", (isLoading || isSyncing) && "animate-spin")} />
-              {isSyncing ? "Syncing…" : "Refresh"}
+        <div className="mt-5 grid gap-4">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <div className="col-span-2 grid min-w-0 gap-3 sm:contents">
+              <CalendarDatePicker
+                clearable={false}
+                label="Start date"
+                name="weather-start"
+                max={endDate}
+                min={HISTORICAL_FLOOR_DATE}
+                onChange={updateStartDate}
+                value={startDate}
+              />
+              <CalendarDatePicker
+                clearable={false}
+                label="End date"
+                name="weather-end"
+                max={maxEndDate}
+                min={startDate}
+                onChange={updateEndDate}
+                value={endDate}
+              />
+            </div>
+            <Button aria-label="Refresh weather" title="Refresh weather" className="col-start-2 row-start-2 w-11 !px-0 sm:col-start-3 sm:row-start-1" disabled={isLoading || isSyncing} onClick={() => void handleRefresh()} variant="secondary">
+              <RefreshCw aria-hidden className={cn("h-4 w-4", (isLoading || isSyncing) && "animate-spin")} />
             </Button>
+            <p className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:col-span-3">
+              <span className="font-semibold text-[var(--accent-strong)]">{isNearForecast ? "16-day forecast" : needsSeasonal ? "Historical & seasonal outlook" : endDate < today ? "Historical weather" : "Daily weather"}</span>
+              <span className="text-[var(--muted)]">{isNearForecast ? "Open-Meteo Forecast API" : needsSeasonal ? "Open-Meteo + ECMWF seasonal" : "Open-Meteo"}</span>
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-3">
             <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[var(--muted)]">
-              <span className="inline-flex items-center gap-2">
+              {startDate < today ? <span className="inline-flex items-center gap-2">
                 <span className="h-0.5 w-6 bg-[#46635a]" /> Historical
-              </span>
-              <span className="inline-flex items-center gap-2">
+              </span> : null}
+              {endDate >= today ? <span className="inline-flex items-center gap-2">
                 <span className="w-6 border-t-2 border-dashed border-[#46635a]" /> Forecast
-              </span>
+              </span> : null}
             </div>
             <p className="text-xs text-[var(--muted)]">
-              Last weather update:{" "}
+              Updated:{" "}
               <strong className="text-[var(--foreground)]">{formatUpdatedAt(dashboard?.sync.lastSuccessfulSync ?? null)}</strong>
             </p>
           </div>
@@ -407,7 +566,7 @@ export function WeatherDashboardPanel({
         </div>
       ) : null}
 
-      {isLoading ? <DashboardSkeleton /> : null}
+      {isLoading ? <DashboardSkeleton showControls={false} /> : null}
 
       {!isLoading && needsSeasonal ? (
         <section className="rounded-md border border-[var(--line)] bg-white shadow-sm">
@@ -508,8 +667,8 @@ export function WeatherDashboardPanel({
             </div>
             {needsSeasonal ? (
               <p className="mb-3 text-xs text-[var(--muted)]">
-                Wind gust isn't part of the seasonal model beyond ~46 days out, so that line stops early — average and maximum
-                wind speed continue through the full outlook.
+                Open-Meteo only sends seasonal gust values for the near outlook. Later gust values are estimated from the
+                recent seasonal relationship between gust and maximum wind.
               </p>
             ) : null}
             <HistoricalForecastLineChart

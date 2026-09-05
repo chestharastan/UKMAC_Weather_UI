@@ -30,6 +30,14 @@ type ApiSeasonalForecast = {
   daily: { time: string[] } & Record<string, Array<number | null>>;
 };
 
+function average(values: number[]) {
+  return values.length ? values.reduce((total, value) => total + value, 0) / values.length : null;
+}
+
+function rounded(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
 /**
  * Fetches directly from Open-Meteo's public Seasonal Forecast API (ECMWF EC46 +
  * SEAS5, ensemble mean — the plain variable name, e.g. `temperature_2m_max`, is
@@ -53,6 +61,22 @@ export async function getSeasonalForecast(latitude: number, longitude: number): 
 
   const payload = (await response.json()) as ApiSeasonalForecast;
   const { time, ...variables } = payload.daily;
+  const gustRatios = time
+    .map((_, index) => {
+      const gust = variables.wind_gusts_10m_max?.[index];
+      const maxWind = variables.wind_speed_10m_max?.[index];
+      return gust !== null && gust !== undefined && maxWind ? gust / maxWind : null;
+    })
+    .filter((value): value is number => value !== null && Number.isFinite(value) && value > 0);
+  const gustMultiplier = average(gustRatios) ?? 1.8;
+
+  function windGust(index: number) {
+    const gust = variables.wind_gusts_10m_max?.[index];
+    if (gust !== null && gust !== undefined) return gust;
+
+    const maxWind = variables.wind_speed_10m_max?.[index];
+    return maxWind !== null && maxWind !== undefined ? rounded(maxWind * gustMultiplier) : null;
+  }
 
   return time.map((date, index) => ({
     apparent_temperature_max: variables.apparent_temperature_max?.[index] ?? null,
@@ -76,7 +100,7 @@ export async function getSeasonalForecast(latitude: number, longitude: number): 
     visibility_mean: null,
     weather_code: variables.weather_code?.[index] ?? null,
     wind_direction_10m_dominant: variables.wind_direction_10m_dominant?.[index] ?? null,
-    wind_gusts_10m_max: variables.wind_gusts_10m_max?.[index] ?? null,
+    wind_gusts_10m_max: windGust(index),
     wind_speed_10m_max: variables.wind_speed_10m_max?.[index] ?? null,
     wind_speed_10m_mean: variables.wind_speed_10m_mean?.[index] ?? null,
   }));

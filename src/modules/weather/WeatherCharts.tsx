@@ -252,7 +252,7 @@ function WeatherTooltip({
 
 export function ChartPanel({ children, description, title }: ChartPanelProps) {
   return (
-    <section className="rounded-md border border-[var(--line)] bg-white p-4 shadow-sm sm:p-5">
+    <section className="relative z-0 rounded-md border border-[var(--line)] bg-white p-4 shadow-sm hover:z-30 focus-within:z-30 sm:p-5">
       <div className="mb-4">
         <h2 className="text-base font-semibold text-[var(--foreground)]">
           {title}
@@ -355,7 +355,7 @@ export function HistoricalForecastLineChart({
               }}
               isAnimationActive={false}
               offset={18}
-              wrapperStyle={{ outline: "none", zIndex: 20 }}
+              wrapperStyle={{ outline: "none", zIndex: 1000 }}
             />
             {todayMarker ? <TodayLine today={today} /> : null}
             {todayMarker
@@ -504,14 +504,14 @@ export function RainfallChart({
                 />
               )}
               cursor={{
-                fill: "rgba(159, 179, 170, 0.08)",
+                fill: "rgba(159, 179, 170, 0.04)",
                 stroke: "#9fb3aa",
                 strokeDasharray: "4 4",
                 strokeWidth: 1,
               }}
               isAnimationActive={false}
               offset={18}
-              wrapperStyle={{ outline: "none", zIndex: 20 }}
+              wrapperStyle={{ outline: "none", zIndex: 1000 }}
             />
             {todayMarker ? <TodayLine today={today} /> : null}
             {todayMarker ? (
@@ -664,7 +664,7 @@ export function HourlyRainfallChart({
                 if (!active || !point) return null;
 
                 return (
-                  <div className="min-w-44 rounded-md border border-[var(--line)] bg-white p-3 shadow-md">
+                  <div className="w-[min(13rem,calc(100vw-2rem))] rounded-md border border-[var(--line)] bg-white/95 p-3 shadow-md">
                     <p className="text-xs font-semibold text-[var(--foreground)]">
                       {point.label}
                     </p>
@@ -683,7 +683,10 @@ export function HourlyRainfallChart({
                   </div>
                 );
               }}
+              allowEscapeViewBox={{ x: false, y: false }}
               cursor={{ stroke: "#a8b9b1", strokeDasharray: "3 3" }}
+              position={{ y: 8 }}
+              wrapperStyle={{ outline: "none", zIndex: 20 }}
             />
             <Bar
               dataKey="rain"
@@ -794,7 +797,7 @@ export function WaterBalanceChart({
                 const datum = payload?.[0]?.payload as ChartDatum | undefined;
                 if (!active || !datum) return null;
                 return (
-                  <div className="min-w-48 rounded-md border border-[var(--line)] bg-white p-3 shadow-md">
+                  <div className="w-[min(15rem,calc(100vw-2rem))] rounded-md border border-[var(--line)] bg-white/95 p-3 shadow-md">
                     <div className="flex justify-between gap-4 text-xs font-semibold">
                       <span>{longDateLabel(datum.date)}</span>
                       <span className="text-[10px] uppercase text-[var(--accent)]">
@@ -830,6 +833,15 @@ export function WaterBalanceChart({
                   </div>
                 );
               }}
+              allowEscapeViewBox={{ x: false, y: false }}
+              cursor={{
+                fill: "rgba(159, 179, 170, 0.04)",
+                stroke: "#9fb3aa",
+                strokeDasharray: "4 4",
+                strokeWidth: 1,
+              }}
+              position={{ y: 8 }}
+              wrapperStyle={{ outline: "none", zIndex: 20 }}
             />
             {todayMarker ? <TodayLine today={today} /> : null}
             {todayMarker ? (
